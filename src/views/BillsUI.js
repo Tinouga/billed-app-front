@@ -21,12 +21,21 @@ const row = (bill) => {
 
 const rows = (data) => {
   return (data && data.length) ? data.map(bill => row(bill)).join("") : ""
+  //   if(data && data.length) {
+  //       const sortedBills = data.sort((a, b) => {
+  //           return new Date(b.date) - new Date(a.date);
+  //       });
+  //       console.log(sortedBills.map(bill => bill.date));
+  //       return sortedBills.map(bill => row(bill)).join("");
+  //   } else {
+  //       return "";
+  //   }
 }
 
 export default ({ data: bills, loading, error }) => {
-  
+
   const modal = () => (`
-    <div class="modal fade" id="modaleFile" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal fade" id="modaleFile" data-testid="modaleFile" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
         <div class="modal-content">
           <div class="modal-header">
@@ -47,14 +56,14 @@ export default ({ data: bills, loading, error }) => {
   } else if (error) {
     return ErrorPage(error)
   }
-  
+
   return (`
     <div class='layout'>
       ${VerticalLayout(120)}
       <div class='content'>
         <div class='content-header'>
           <div class='content-title'> Mes notes de frais </div>
-          <button type="button" data-testid='btn-new-bill' class="btn btn-primary">Nouvelle note de frais</button>
+          <button type="button" data-testid="btn-new-bill" class="btn btn-primary">Nouvelle note de frais</button>
         </div>
         <div id="data-table">
         <table id="example" class="table table-striped" style="width:100%">
