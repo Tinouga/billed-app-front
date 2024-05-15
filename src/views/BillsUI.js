@@ -21,6 +21,7 @@ const row = (bill) => {
 
 const rows = (data) => {
   return (data && data.length) ? data.map(bill => row(bill)).join("") : ""
+  // NB : this method is used to fit the test initially provided in the test suite, but this implementation isn't optimal, so I won't be using it but still leaving it here for reference
   //   if(data && data.length) {
   //       const sortedBills = data.sort((a, b) => {
   //           return new Date(b.date) - new Date(a.date);

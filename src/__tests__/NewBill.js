@@ -29,20 +29,12 @@ describe("Given I am connected as an employee", () => {
       expect(isActive).toBeTruthy();
     });
     test("Then the form should be rendered", () => {
-      const html = NewBillUI();
-      document.body.innerHTML = html;
+      document.body.innerHTML = NewBillUI();
       const form = screen.getByTestId('form-new-bill');
       expect(form).toBeTruthy();
     });
     describe("When I click on the submit button", () => {
-      let newBill;
-      let expenseInput;
-      let datePickerInput;
-      let amountInput;
-      let pctInput;
-      let fileInput;
-
-      beforeEach(() => {
+      test("If the form required fields are empty, it should not be submitted", () => {
         const user = { type: 'Employee' };
         Storage.prototype.getItem = jest.fn((key) => {
           if(key === 'user') return JSON.stringify(user);
@@ -51,21 +43,19 @@ describe("Given I am connected as an employee", () => {
 
         document.body.innerHTML = NewBillUI();
         const onNavigate = jest.fn();
-        newBill = new NewBill({
+        const newBill = new NewBill({
           document,
           onNavigate,
           store: mockStore,
           localStorage: window.localStorage
         });
 
-        expenseInput = screen.getByTestId('expense-type');
-        datePickerInput = screen.getByTestId('datepicker');
-        amountInput = screen.getByTestId('amount');
-        pctInput = screen.getByTestId('pct');
-        fileInput = screen.getByTestId('file');
-      });
+        const expenseInput = screen.getByTestId('expense-type');
+        const datePickerInput = screen.getByTestId('datepicker');
+        const amountInput = screen.getByTestId('amount');
+        const pctInput = screen.getByTestId('pct');
+        const fileInput = screen.getByTestId('file');
 
-      test("If the form required fields are empty, it should not be submitted", () => {
         // ensuring required fields are empty
         expenseInput.value = '';
         datePickerInput.value = '';
@@ -89,37 +79,6 @@ describe("Given I am connected as an employee", () => {
         fireEvent.submit(form);
 
         expect(handleSubmitSpy).not.toHaveBeenCalled();
-        handleSubmitSpy.mockRestore();
-      });
-      test("If the form has valid data, it should be submitted", () => {
-        const mockedFile = new File(['file'], 'file.jpg', { type: 'image/jpg' });
-
-        // filling the required fields with valid data
-        expenseInput.value = 'Transports';
-        datePickerInput.value = '2021-09-01';
-        amountInput.value = '100';
-        pctInput.value = '20';
-        Object.defineProperty(fileInput, 'files', {
-          value: [mockedFile],
-          writable: false
-        });
-
-        const handleSubmitSpy = jest.spyOn(newBill, 'handleSubmit');
-        const form = screen.getByTestId('form-new-bill');
-        form.addEventListener('submit', (event) => {
-          event.preventDefault();
-          if(!event.target.checkValidity()) {
-            event.stopPropagation();
-          } else {
-            newBill.handleSubmit(event);
-          }
-        });
-
-        fileInput.addEventListener('change', newBill.handleChangeFile);
-        fireEvent.change(fileInput);
-
-        fireEvent.submit(form);
-        expect(newBill.handleSubmit).toHaveBeenCalled();
         handleSubmitSpy.mockRestore();
       });
     });
@@ -214,8 +173,6 @@ describe("Given I am a user connected as an employee", () => {
         localStorage: window.localStorage
       });
 
-      // const handleChangeFileSpy = jest.spyOn(newBill, 'handleChangeFile');
-      // const handleSubmitSpy = jest.spyOn(newBill, 'handleSubmit');
       const createBillSpy = jest.spyOn(mockStore.bills(), 'create');
       const updateBillSpy = jest.spyOn(mockStore.bills(), 'update');
 
@@ -245,9 +202,7 @@ describe("Given I am a user connected as an employee", () => {
       fireEvent.change(fileInput);
       fireEvent.submit(form);
 
-      // expect(handleChangeFileSpy).toHaveBeenCalled();
       expect(createBillSpy).toHaveBeenCalled();
-      // expect(handleSubmitSpy).toHaveBeenCalled();
       expect(updateBillSpy).toHaveBeenCalled();
       expect(updateBillSpy).toHaveBeenCalledWith(expect.objectContaining({
         data: JSON.stringify({
@@ -269,8 +224,6 @@ describe("Given I am a user connected as an employee", () => {
       await waitFor(() => screen.getByText("Mes notes de frais"));
       expect(screen.getByText("Mes notes de frais")).toBeTruthy();
 
-      // handleChangeFileSpy.mockRestore();
-      // handleSubmitSpy.mockRestore();
       createBillSpy.mockRestore();
       updateBillSpy.mockRestore();
     });
