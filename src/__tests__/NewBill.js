@@ -54,6 +54,7 @@ describe("Given I am connected as an employee", () => {
         newBill = new NewBill({
           document,
           onNavigate,
+          store: mockStore,
           localStorage: window.localStorage
         });
 
@@ -66,17 +67,25 @@ describe("Given I am connected as an employee", () => {
 
       test("If the form required fields are empty, it should not be submitted", () => {
         // ensuring required fields are empty
-
         expenseInput.value = '';
         datePickerInput.value = '';
         amountInput.value = '';
         pctInput.value = '';
         fileInput.value = '';
 
-        // todo is it the best way to go around this, considering the event listeners are bound in the constructor?
         const handleSubmitSpy = jest.spyOn(newBill, 'handleSubmit');
 
         const form = screen.getByTestId('form-new-bill');
+        // mocking the html 5 form validation
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            if(!event.target.checkValidity()) {
+              event.stopPropagation();
+            } else {
+              newBill.handleSubmit(event);
+            }
+        });
+
         fireEvent.submit(form);
 
         expect(handleSubmitSpy).not.toHaveBeenCalled();
@@ -95,14 +104,21 @@ describe("Given I am connected as an employee", () => {
           writable: false
         });
 
-        // todo ask daouda if I should fire the change event or not in a unit test
-        // fireEvent.change(fileInput);
-
         const handleSubmitSpy = jest.spyOn(newBill, 'handleSubmit');
-
         const form = screen.getByTestId('form-new-bill');
-        fireEvent.submit(form);
+        form.addEventListener('submit', (event) => {
+          event.preventDefault();
+          if(!event.target.checkValidity()) {
+            event.stopPropagation();
+          } else {
+            newBill.handleSubmit(event);
+          }
+        });
 
+        fileInput.addEventListener('change', newBill.handleChangeFile);
+        fireEvent.change(fileInput);
+
+        fireEvent.submit(form);
         expect(newBill.handleSubmit).toHaveBeenCalled();
         handleSubmitSpy.mockRestore();
       });
@@ -135,6 +151,8 @@ describe("Given I am connected as an employee", () => {
 
         fileInput = screen.getByTestId('file');
         fileErrorSpan = screen.getByTestId('file-error');
+
+        fileInput.addEventListener('change', newBill.handleChangeFile);
       });
       afterEach(() => {
         handleChangeFileSpy.mockRestore();
@@ -151,8 +169,7 @@ describe("Given I am connected as an employee", () => {
 
           fireEvent.change(fileInput);
 
-          // todo ask Daouda why this doesn't work
-          // expect(handleChangeFileSpy).toHaveBeenCalled();
+          expect(handleChangeFileSpy).toHaveBeenCalled();
           expect(createBillSpy).not.toHaveBeenCalled();
           expect(fileErrorSpan.textContent).toBe("Seuls les fichiers jpg, jpeg et png sont autorisés.");
         });
@@ -167,6 +184,7 @@ describe("Given I am connected as an employee", () => {
 
           fireEvent.change(fileInput);
 
+          expect(handleChangeFileSpy).toHaveBeenCalled();
           expect(createBillSpy).toHaveBeenCalled();
           expect(fileErrorSpan.textContent).toBe("");
         });
@@ -196,8 +214,8 @@ describe("Given I am a user connected as an employee", () => {
         localStorage: window.localStorage
       });
 
-      const handleChangeFileSpy = jest.spyOn(newBill, 'handleChangeFile');
-      const handleSubmitSpy = jest.spyOn(newBill, 'handleSubmit');
+      // const handleChangeFileSpy = jest.spyOn(newBill, 'handleChangeFile');
+      // const handleSubmitSpy = jest.spyOn(newBill, 'handleSubmit');
       const createBillSpy = jest.spyOn(mockStore.bills(), 'create');
       const updateBillSpy = jest.spyOn(mockStore.bills(), 'update');
 
@@ -208,6 +226,9 @@ describe("Given I am a user connected as an employee", () => {
       const amountInput = screen.getByTestId('amount');
       const pctInput = screen.getByTestId('pct');
       const fileInput = screen.getByTestId('file');
+
+      fileInput.addEventListener('change', newBill.handleChangeFile);
+      form.addEventListener('submit', newBill.handleSubmit);
 
       const mockedFile = new File(['file'], 'file.jpg', { type: 'image/jpg' });
 
@@ -224,18 +245,32 @@ describe("Given I am a user connected as an employee", () => {
       fireEvent.change(fileInput);
       fireEvent.submit(form);
 
-      // todo ask Daouda why those methods aren't called
       // expect(handleChangeFileSpy).toHaveBeenCalled();
       expect(createBillSpy).toHaveBeenCalled();
       // expect(handleSubmitSpy).toHaveBeenCalled();
       expect(updateBillSpy).toHaveBeenCalled();
+      expect(updateBillSpy).toHaveBeenCalledWith(expect.objectContaining({
+        data: JSON.stringify({
+          type: "Transports",
+          name: "",
+          amount: 100,
+          date: "2021-09-01",
+          vat: "",
+          pct: 20,
+          commentary: "",
+          fileUrl: null,
+          fileName: null,
+          status: "pending"
+        }),
+        selector: null
+      }));
 
       // verifying that we're redirected to the bills page
       await waitFor(() => screen.getByText("Mes notes de frais"));
       expect(screen.getByText("Mes notes de frais")).toBeTruthy();
 
-      handleChangeFileSpy.mockRestore();
-      handleSubmitSpy.mockRestore();
+      // handleChangeFileSpy.mockRestore();
+      // handleSubmitSpy.mockRestore();
       createBillSpy.mockRestore();
       updateBillSpy.mockRestore();
     });
